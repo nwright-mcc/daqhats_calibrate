@@ -1,0 +1,6 @@
+*.csv
+cal*.txt
+serial*.txt
+*.pyc
+*.eep
+
