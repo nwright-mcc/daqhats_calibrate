@@ -8,7 +8,7 @@ import datetime
 import json
 import io
 import MCC_GPIB_Library as gpib
-import mcchats as hats
+import daqhats as hats
 
 # get address
 print datetime.datetime.now()
@@ -21,7 +21,7 @@ serial = raw_input("Enter serial number: ")
 num_channels = 4
 slopes = [0.0] * num_channels
 offsets = [0.0] * num_channels
-lsb_size = 2 * 0.128 / (2 ** 24)
+inv_lsb_size = (2 ** 24)/ (2 * 0.078125)
 #zero_code = 2048
 
 print("Initializing...")
@@ -69,7 +69,7 @@ while point_index < num_points:
     # Get the DMM reading
     dmm_reading = dmm.read_voltage(1)
     print("  DMM read {:.3f} mV".format(dmm_reading * 1e3))
-    dmm_code = (dmm_reading / lsb_size) #+ zero_code
+    dmm_code = (dmm_reading * inv_lsb_size) #+ zero_code
     desired.append(dmm_code)
     #print("Desired {}".format(dmm_code))
 
@@ -79,11 +79,11 @@ while point_index < num_points:
     
     for channel in range(num_channels):
         for sample in range(num_averages):
-            value = board.a_in_read(channel, scaled = False, calibrated = False)
+            value = board.a_in_read(channel, hats.OptionFlags.NOSCALEDATA | hats.OptionFlags.NOCALIBRATEDATA)
             #print("Ch {0} read {1}".format(channel, value))
             averages[channel] += value/num_averages
 
-    print("  ADC read {:.3f} mV".format(averages[0] * lsb_size * 1e3))
+    print("  ADC read {:.3f} mV".format(averages[0] * 1e3 / inv_lsb_size))
     str = "{0:.6f},".format(dmm_reading)
     str += ",".join("{0:.6f}".format(x) for x in averages)
     str += "\n"
