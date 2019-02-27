@@ -36,7 +36,7 @@ board = hats.mcc134(int(address))
 
 # configure the channels
 for channel in range(4):
-    board.tc_type_write(hats.TcTypes.TYPE_J)
+    board.tc_type_write(channel, hats.TcTypes.TYPE_J)
 
 num_averages = 40
 num_points = 3
