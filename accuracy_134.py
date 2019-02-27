@@ -42,7 +42,7 @@ for channel in channels: #range(num_channels):
 print("Initializing...")
 
 # Modify these for the specific test
-num_averages = 20
+num_averages = 10
 num_points = 14
 min_voltage = -0.070
 max_voltage = 0.070
