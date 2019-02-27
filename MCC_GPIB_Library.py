@@ -29,11 +29,14 @@ class DMM:
     def __del__(self):
         self.device.ibloc()
         
-    def read_voltage(self, resolution):
+    def read_voltage(self, resolution, range=0):
         if resolution == 0:
             self.device.write(":MEAS:VOLT:DC? DEF,DEF")
         else:
-            self.device.write(":MEAS:VOLT:DC? DEF,MIN")
+            if range == 0:
+                self.device.write(":MEAS:VOLT:DC? DEF,MIN")
+            else:
+                self.device.write(":MEAS:VOLT:DC? MIN,MIN")
         
         result = self.device.read()
         

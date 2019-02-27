@@ -67,7 +67,7 @@ while point_index < num_points:
     time.sleep(6)
 
     # Get the DMM reading
-    dmm_reading = dmm.read_voltage(1)
+    dmm_reading = dmm.read_voltage(1, 1)
     print("  DMM read {:.3f} mV".format(dmm_reading * 1e3))
     dmm_code = (dmm_reading * inv_lsb_size) #+ zero_code
     desired.append(dmm_code)
