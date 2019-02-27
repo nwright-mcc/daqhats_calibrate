@@ -34,6 +34,10 @@ dp8200 = gpib.DP8200()
 # Create an instance of the board
 board = hats.mcc134(int(address))
 
+# configure the channels
+for channel in range(4):
+    board.tc_type_write(hats.TcTypes.TYPE_J)
+
 num_averages = 40
 num_points = 3
 min_voltage = -0.070
