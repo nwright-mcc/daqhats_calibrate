@@ -43,6 +43,20 @@ class DMM:
         value = float(result)
         return value
     
+    def read_ac_voltage(self, resolution, range=0):
+        if resolution == 0:
+            self.device.write(":MEAS:VOLT:AC? DEF,DEF")
+        else:
+            if range == 0:
+                self.device.write(":MEAS:VOLT:AC? DEF,MIN")
+            else:
+                self.device.write(":MEAS:VOLT:AC? MIN,MIN")
+        
+        result = self.device.read()
+        
+        value = float(result)
+        return value
+    
     def display(self, string):
         self.device.write("DISP:TEXT \"{0:s}\"".format(string))
         return
