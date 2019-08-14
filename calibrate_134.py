@@ -38,7 +38,7 @@ board = hats.mcc134(int(address))
 for channel in range(4):
     board.tc_type_write(channel, hats.TcTypes.TYPE_J)
 
-num_averages = 40
+num_averages = 10
 num_points = 3
 min_voltage = -0.070
 max_voltage = 0.070
@@ -81,11 +81,12 @@ while point_index < num_points:
     count = 0
     averages = [0.0] * num_channels
     
-    for channel in range(num_channels):
-        for sample in range(num_averages):
+    for sample in range(num_averages):
+        for channel in range(num_channels):
             value = board.a_in_read(channel, hats.OptionFlags.NOSCALEDATA | hats.OptionFlags.NOCALIBRATEDATA)
             #print("Ch {0} read {1}".format(channel, value))
             averages[channel] += value/num_averages
+        time.sleep(1)
 
     print("  ADC read {:.3f} mV".format(averages[0] * 1e3 / inv_lsb_size))
     str = "{0:.6f},".format(dmm_reading)
