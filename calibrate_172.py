@@ -7,9 +7,6 @@ import time
 import json
 import io
 
-# get address
-address = raw_input("Enter board address: ")
-
 # get serial number
 serial =  raw_input("Enter serial number: ")
 
