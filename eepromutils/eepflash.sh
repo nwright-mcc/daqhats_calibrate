@@ -3,6 +3,7 @@
 MODE="NOT_SET"
 FILE="NOT_SET"
 TYPE="NOT_SET"
+OFFSET=0
 
 usage()
 {
@@ -10,6 +11,7 @@ usage()
 	echo ""
 	echo "./eepflash.sh"
 	echo "	-h --help: display this help message"
+	echo "	-a=address: address offset from 0x50"
 	echo "	-r --read: read .eep from the eeprom"
 	echo "	-w --write: write .eep to the eeprom"
 	echo "	-f=file_name --file=file_name: binary .eep file to read to/from"
@@ -25,13 +27,13 @@ usage()
 }
 
 if [ "$(id -u)" != "0" ]; then
-   echo "This script must be run as root" 1>&2
-   exit 1
+	echo "This script must be run as root" 1>&2
+	exit 1
 fi
- 
+
 while [ "$1" != "" ]; do
-    PARAM=`echo $1 | awk -F= '{print $1}'`
-    VALUE=`echo $1 | awk -F= '{print $2}'`
+	PARAM=`echo $1 | awk -F= '{print $1}'`
+	VALUE=`echo $1 | awk -F= '{print $2}'`
 	case $PARAM in
 		-h | --help)
 			usage
@@ -52,6 +54,9 @@ while [ "$1" != "" ]; do
 				exit 1
 			fi
 			;;
+		-a | --address)
+			OFFSET=$VALUE
+			;;
 		-f | --file)
 			FILE=$VALUE
 			;;
@@ -63,7 +68,7 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
- 
+
 if [ "$MODE" = "NOT_SET" ]; then
 	echo "You need to set mode (read or write). Try -h for help."
 	exit 1
@@ -114,20 +119,23 @@ fi
 
 SYS=/sys/class/i2c-adapter/i2c-$BUS
 
-if [ ! -d "$SYS/$BUS-0050" ]; then
-	echo "$TYPE 0x50" > $SYS/new_device
+address=$((0x50 + $OFFSET))
+devstr=$(printf "$SYS/$BUS-%04X" $address)
+if [ ! -d $devstr ]; then
+	temp=$(printf "$TYPE 0x%02X" $address)
+	echo $temp > $SYS/new_device
 fi
 
 
 if [ "$MODE" = "write" ]
  then
 	echo "Writing..."
-	dd if=$FILE of=$SYS/$BUS-0050/eeprom
+	dd if=$FILE of="$devstr/eeprom"
 	rc=$?
 elif [ "$MODE" = "read" ]
  then
 	echo "Reading..."
-	dd if=$SYS/$BUS-0050/eeprom of=$FILE
+	dd if="$devstr/eeprom" of=$FILE
 	rc=$?
 fi
 
