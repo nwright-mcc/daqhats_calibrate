@@ -98,7 +98,7 @@ if [ -e "/dev/i2c-0" ]; then
 elif [ -e "/dev/i2c-3" ]; then
 	BUS=3
 else
-	dtoverlay i2c-gpio i2c_gpio_sda=0 i2c_gpio_scl=1
+	dtoverlay i2c-gpio i2c_gpio_sda=0 i2c_gpio_scl=1 bus=3
 	rc=$?
 	if [ $rc != 0 ]; then
 		echo "Loading of i2c-gpio dtoverlay failed. Do an rpi-update (and maybe apt-get update; apt-get upgrade)."
