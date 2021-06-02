@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # MCC 118 calibration
 #
@@ -6,14 +6,16 @@ from datetime import date
 import time
 import json
 import io
-import MCC_GPIB_Library as gpib
-import mcchats as hats
+#import MCC_GPIB_Library as gpib
+import daqhats as hats
 
 # get address
-address = raw_input("Enter board address: ")
+address = int(input("Enter board address: "))
+print(address)
 
 # get serial number
-serial = raw_input("Enter serial number: ")
+serial = input("Enter serial number: ")
+print(serial)
 
 num_channels = 8
 slopes = [0.0] * num_channels
@@ -24,9 +26,11 @@ zero_code = 2048
 print("Initializing...")
 
 # Create the DMM instrument
-dmm = gpib.DMM()
+#dmm = gpib.DMM()
 # Create the DP8200 instrument
-dp8200 = gpib.DP8200()
+#dp8200 = gpib.DP8200()
+
+# ToDo: Initialize your DMM and precision voltage source here
 
 # Create an instance of the board
 board = hats.mcc118(address)
@@ -44,8 +48,9 @@ output_file.write(str)
 
 voltage_setpoint = min_voltage
 
-# Set the initial voltage so we don't have a large step
-dp8200.set_voltage(voltage_setpoint)
+# ToDo: Set the initial voltage on the voltage source so we don't have a large step
+#dp8200.set_voltage(voltage_setpoint)
+
 time.sleep(1.0)
 
 codes_buffer = []
@@ -53,16 +58,17 @@ desired = []
 
 print("Calibrating...")
 point_index = 0
+dmm_reading = 0
 while point_index < num_points:
     #print "Point {0} of {1}: ".format(point_index, num_points),
 
-    # Set the voltage
-    dp8200.set_voltage(voltage_setpoint)
+    # ToDo: Set the voltage on the precision source
+    #dp8200.set_voltage(voltage_setpoint)
 
     time.sleep(1)
 
-    # Get the DMM reading
-    dmm_reading = dmm.read_voltage(0)
+    # ToDo: Get the DMM reading
+    #dmm_reading = dmm.read_voltage(0)
     dmm_code = (dmm_reading / lsb_size) + zero_code
     desired.append(dmm_code)
 
@@ -77,27 +83,20 @@ while point_index < num_points:
         count += 1
     """
     for channel in range(num_channels):
-        board.a_in_scan_start_scan(channel_mask = 1 << channel, 
-            samples_per_channel = num_averages, 
+        # start a scan on the channel
+        board.a_in_scan_start(channel_mask = 1 << channel,
+            samples_per_channel = num_averages,
             sample_rate_per_channel = 10000,
-            scaled = False,
-            calibrated = False)
-        
-        finished = False
-        data = []
-        while not finished:
-            status = board.a_in_scan_read(samples_per_channel = 0, timeout = 0.1)
-                    
-            if (status['running'] == False):
-                finished = True
-                
-        status = board.a_in_scan_read(samples_per_channel = num_averages, timeout = 0)
-        if len(status['data']) != num_averages:
+            options = hats.OptionFlags.NOSCALEDATA | hats.OptionFlags.NOCALIBRATEDATA)
+        # perform a blocking read of all the data
+        result = board.a_in_scan_read(samples_per_channel = num_averages, timeout = 1.0)
+        board.a_in_scan_cleanup()
+        if len(result.data) != num_averages:
             raise ValueError("Incorrect number of samples read")
 
-        for sample in status['data']:
-            sums[channel] += data[x]
-    
+        for sample in result.data:
+            sums[channel] += sample
+
     averages = [x / num_averages for x in sums]
     str = "{0:.6f},".format(dmm_reading)
     str += ",".join("{0:.6f}".format(x) for x in averages)
@@ -105,7 +104,7 @@ while point_index < num_points:
     output_file.write(str)
 
     codes_buffer.append(averages)
-    
+
     point_index += 1
     voltage_setpoint += voltage_step
 
@@ -130,14 +129,15 @@ for channel in range(num_channels):
     s = "Ch {0:d} Slope,{1:.9f}\nCh {2:d} Offset,{3:.9f}\n".format(channel, slopes[channel], channel, offsets[channel])
     output_file.write(s)
 
-print
-print "Channel\tSlope\tOffset"
-print "-------\t------\t-------"
+print()
+print("Channel\tSlope\tOffset")
+print("-------\t------\t-------")
 for channel in range(8):
-    print "{0}\t{1:.3f}\t{2:.3f}".format(channel, slopes[channel], offsets[channel])
-print
+    print("{0}\t{1:.3f}\t{2:.3f}".format(channel, slopes[channel], offsets[channel]))
+print()
 
-dp8200.set_voltage(0.0)
+# ToDo: set the precision supply to 0V output
+#dp8200.set_voltage(0.0)
 output_file.close()
 
 # Create calibration file
@@ -147,9 +147,8 @@ data['calibration'] = {}
 data['calibration']['date'] = date.today().isoformat()
 data['calibration']['slopes'] = slopes
 data['calibration']['offsets'] = offsets
-#hat_data = json.dumps(data, indent=0, separators=(',', ':'), ensure_ascii=False)
 hat_data = json.dumps(data, separators=(',', ':'), ensure_ascii=False)
 with io.open("./calibrate_118.txt", "w", encoding="utf8") as outfile:
-    outfile.write(unicode(hat_data))
+    outfile.write(hat_data)
 
 print("Output saved in calibrate_118.txt.")
