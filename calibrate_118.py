@@ -60,28 +60,26 @@ print("Calibrating...")
 point_index = 0
 dmm_reading = 0
 while point_index < num_points:
-    #print "Point {0} of {1}: ".format(point_index, num_points),
+    print("Point {0} of {1}: ".format(point_index+1, num_points))
 
-    # ToDo: Set the voltage on the precision source
+    # ToDo: Set the voltage on the precision source. For now, pause for the user to manually set a voltage.
     #dp8200.set_voltage(voltage_setpoint)
+    input("Set the voltage supply to {:.1f} then hit Enter".format(voltage_setpoint))
 
     time.sleep(1)
 
-    # ToDo: Get the DMM reading
+    # ToDo: Get the DMM reading. For now, have the user enter a DMM reading
     #dmm_reading = dmm.read_voltage(0)
+    dmm_reading = float(input("Enter the DMM voltage reading: "))
+
     dmm_code = (dmm_reading / lsb_size) + zero_code
     desired.append(dmm_code)
 
     # Read the voltages
     count = 0
     sums = [0.0] * num_channels
-    """
-    while count < num_averages:
-        for channel in range (num_channels):
-            value = board.read_code(channel, False)
-            sums[channel] += value
-        count += 1
-    """
+    averages = []
+
     for channel in range(num_channels):
         # start a scan on the channel
         board.a_in_scan_start(channel_mask = 1 << channel,
@@ -97,7 +95,10 @@ while point_index < num_points:
         for sample in result.data:
             sums[channel] += sample
 
-    averages = [x / num_averages for x in sums]
+        averages.append(sums[channel] / num_averages)
+
+        print("  Channel {0} ADC {1:.1f}".format(channel, averages[channel]))
+
     str = "{0:.6f},".format(dmm_reading)
     str += ",".join("{0:.6f}".format(x) for x in averages)
     str += "\n"
@@ -107,6 +108,8 @@ while point_index < num_points:
 
     point_index += 1
     voltage_setpoint += voltage_step
+
+    print()
 
 output_file.write("\n")
 
